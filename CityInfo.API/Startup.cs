@@ -5,7 +5,9 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json.Serialization;
 
 namespace CityInfo.API
 {
@@ -15,6 +17,22 @@ namespace CityInfo.API
     // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
     public void ConfigureServices(IServiceCollection services)
     {
+      services.AddMvc()
+        .AddMvcOptions(options => {
+          // Add a xml format serializer
+          options.OutputFormatters.Add(new XmlDataContractSerializerOutputFormatter());
+        });
+
+
+      /* Make it so that the names of the fields don't change when the models are serialized */
+      //services.AddMvc()
+      //  .AddJsonOptions(options => {
+      //    if (options.SerializerSettings.ContractResolver != null)
+      //    {
+      //      DefaultContractResolver castedResolver = (DefaultContractResolver)options.SerializerSettings.ContractResolver;
+      //      castedResolver.NamingStrategy = null;
+      //    }
+      //  });
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -24,6 +42,10 @@ namespace CityInfo.API
         app.UseDeveloperExceptionPage();
       else
         app.UseExceptionHandler();
+
+      app.UseStatusCodePages(); 
+
+      app.UseMvc();
 
       app.Run(async (context) =>
       {
