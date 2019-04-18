@@ -1,4 +1,5 @@
 ﻿using CityInfo.API.Models;
+using CityInfo.Data.Entities;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -13,18 +14,23 @@ namespace CityInfo.API.Controllers
     [HttpGet, Route("")]
     public IActionResult GetCities()
     {
-      return Ok(_repo.Cities);
+      IEnumerable<CityModel> cities = _repo.GetAllCities()
+        .Select(city => _modelFactory.Create(city));
+
+      return Ok(cities);
     }
 
     [HttpGet, Route("{id:int}")]
     public IActionResult GetCity(int id)
     {
-      CityModel cityModel = _repo.Cities
-        .Where(city => city.Id == id)
+      City city = _repo.GetAllCities()
+        .Where(c => c.Id == id)
         .FirstOrDefault();
 
-      if (cityModel == null)
+      if (city == null)
         return NotFound("No City was found for the passed id");
+
+      CityModel cityModel = _modelFactory.Create(city);
 
       return Ok(cityModel);
     }

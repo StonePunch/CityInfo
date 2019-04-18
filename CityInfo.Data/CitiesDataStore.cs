@@ -1,42 +1,40 @@
-﻿using CityInfo.API.Models;
+﻿using CityInfo.Data.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace CityInfo.API
+namespace CityInfo.Data
 {
   public class CitiesDataStore
   {
-    //public static CitiesDataStore Current { get; } = new CitiesDataStore();
-
-    public List<CityModel> Cities { get; set; }
+    private readonly List<City> Cities;
 
     public CitiesDataStore()
     {
-      Cities = new List<CityModel>()
+      Cities = new List<City>()
       {
-        new CityModel()
+        new City()
         {
           Id = 1,
           Name = "New York City",
           Description = "Big Apple",
           NumberOfPointsOfInterest = 10,
-          PointsOfInterest = new List<PointOfInterestModel>()
+          PointsOfInterest = new List<PointOfInterest>()
           {
-            new PointOfInterestModel()
+            new PointOfInterest()
             {
               Id = 1,
               Name = "Broadway",
               Description = "Phantom of the Opera is recommended",
             },
-            new PointOfInterestModel()
+            new PointOfInterest()
             {
               Id = 2,
               Name = "Times Square",
               Description = "Crossroads of the City",
             },
-            new PointOfInterestModel()
+            new PointOfInterest()
             {
               Id = 3,
               Name = "Central Park",
@@ -44,15 +42,15 @@ namespace CityInfo.API
             },
           },
         },
-        new CityModel()
+        new City()
         {
           Id = 2,
           Name = "Antwerp",
           Description = "Has a cathedral that was never finished",
           NumberOfPointsOfInterest = 3,
-          PointsOfInterest = new List<PointOfInterestModel>()
+          PointsOfInterest = new List<PointOfInterest>()
           {
-            new PointOfInterestModel()
+            new PointOfInterest()
             {
               Id = 4,
               Name = "Cathedral of Our Lady",
@@ -60,21 +58,21 @@ namespace CityInfo.API
             },
           },
         },
-        new CityModel()
+        new City()
         {
           Id = 3,
           Name = "Paris",
           Description = "Avecs",
           NumberOfPointsOfInterest = 13,
-          PointsOfInterest = new List<PointOfInterestModel>()
+          PointsOfInterest = new List<PointOfInterest>()
           {
-            new PointOfInterestModel()
+            new PointOfInterest()
             {
               Id = 5,
               Name = "Eiffel Tower",
               Description = "Was originaly only supposed to be a temporary building",
             },
-            new PointOfInterestModel()
+            new PointOfInterest()
             {
               Id = 6,
               Name = "Notre Dame",
@@ -84,5 +82,22 @@ namespace CityInfo.API
         }
       };
     }
+
+    public List<City> GetAllCities()
+    {
+      return Cities;
+    }
+
+    public City GetCity(int id)
+    {
+      return Cities
+        .Where(city => city.Id == id)
+        .FirstOrDefault();
+    }
+
+    //public bool Insert(int cityId, PointOfInterest pointOfInterest)
+    //{
+
+    //}
   }
 }

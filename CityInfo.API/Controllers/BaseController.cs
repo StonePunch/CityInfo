@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using CityInfo.API.Models;
+using CityInfo.Data;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,9 +12,12 @@ namespace CityInfo.API.Controllers
   {
     public CitiesDataStore _repo { get; }
 
+    public ModelFactory _modelFactory { get; }
+
     public BaseController()
     {
       _repo = new CitiesDataStore();
+      _modelFactory = new ModelFactory();
     }
   }
 }

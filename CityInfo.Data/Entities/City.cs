@@ -3,14 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace CityInfo.API.Models
+namespace CityInfo.Data.Entities
 {
-  public class CityModel
+  public class City
   {
+    public int Id { get; set; }
     public string Name { get; set; }
     public string Description { get; set; }
     public int NumberOfPointsOfInterest { get; set; }
-    public IEnumerable<PointOfInterestModel> PointsOfInterest { get; set; } = 
-      new List<PointOfInterestModel>();
+    public IEnumerable<PointOfInterest> PointsOfInterest { get; set; } = 
+      new List<PointOfInterest>();
   }
 }
