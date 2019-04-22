@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CityInfo.Data
 {
-  public class CitiesDataStore
+  public class CitiesDataStore : ICitiesDataStore
   {
     private readonly List<City> Cities;
 
@@ -83,7 +83,7 @@ namespace CityInfo.Data
       };
     }
 
-    public List<City> GetAllCities()
+    public ICollection<City> GetAllCities()
     {
       return Cities;
     }
@@ -107,6 +107,29 @@ namespace CityInfo.Data
       city.PointsOfInterest.Add(pointOfInterest);
 
       return pointOfInterest;
+    }
+
+    public bool Update(int cityId, PointOfInterest pointOfInterest)
+    {
+      City city = GetCity(cityId);
+
+      PointOfInterest updatedPointOfInterest = city.PointsOfInterest
+        .Where(p => p.Id == pointOfInterest.Id)
+        .FirstOrDefault();
+
+      updatedPointOfInterest.Name = pointOfInterest.Name;
+      updatedPointOfInterest.Description = pointOfInterest.Description;
+
+      return true;
+    }
+
+    public bool Delete(int cityId, PointOfInterest pointOfInterest)
+    {
+      City city = GetCity(cityId);
+
+      city.PointsOfInterest.Remove(pointOfInterest);
+
+      return true;
     }
   }
 }

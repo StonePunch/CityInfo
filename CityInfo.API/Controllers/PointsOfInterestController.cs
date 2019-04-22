@@ -1,7 +1,9 @@
 ﻿using CityInfo.API.Models;
+using CityInfo.Data;
 using CityInfo.Data.Entities;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,21 +12,33 @@ using System.Threading.Tasks;
 namespace CityInfo.API.Controllers
 {
   [Route("api/cities/{cityId:int}/pointsofinterest")]
-  public class PointsOfInterestController : BaseController
+  public class PointsOfInterestController : BaseController<PointsOfInterestController>
   {
     [HttpGet("")]
     public IActionResult GetPointsOfInterest(int cityId)
     {
-      City city = _repo.GetCity(cityId);
+      try
+      {
+        throw new Exception("hi");
+        City city = _repo.GetCity(cityId);
 
-      if (city == null)
-        return NotFound("No City was found for the passed id");
+        if (city == null)
+        {
+          _logger.LogInformation($"City with id {cityId} wasn't found when accessing points of interest.");
+          return NotFound("No City was found for the passed id");
+        }
 
-      CityModel cityModel = _modelFactory.Create(city);
+        CityModel cityModel = _modelFactory.Create(city);
 
-      IEnumerable<PointOfInterestModel> pointsOfInterest = cityModel.PointsOfInterest;
+        IEnumerable<PointOfInterestModel> pointsOfInterest = cityModel.PointsOfInterest;
 
-      return Ok(pointsOfInterest);
+        return Ok(pointsOfInterest);
+      }
+      catch (Exception exception)
+      {
+        _logger.LogCritical($"Exception while getting points of interest for city with id {cityId}", exception);
+        return StatusCode(500, "A problem happened while handling your request");
+      }
     }
 
     [HttpGet("{id}", Name = "GetPointOfInterest")]
@@ -64,18 +78,13 @@ namespace CityInfo.API.Controllers
       if (city == null)
         return NotFound("No City was found for the passed id");
 
-      int maxId = _repo.GetAllCities()
-        .SelectMany(c => c.PointsOfInterest)
-        .Max(p => p.Id);
-
       PointOfInterest pointOfInterest = new PointOfInterest()
       {
-        Id = ++maxId,
         Name = pointOfInterestModel.Name,
         Description = pointOfInterestModel.Description,
       };
 
-      city.PointsOfInterest.ToList().Add(pointOfInterest);
+      _repo.Insert(cityId, pointOfInterest);
 
       return CreatedAtRoute("GetPointOfInterest", new {
         cityId = city.Id,
@@ -110,7 +119,7 @@ namespace CityInfo.API.Controllers
       pointOfInterest.Name = pointOfInterestModel.Name;
       pointOfInterest.Description = pointOfInterestModel.Description;
 
-      //_repo.Insert(cityId, pointOfInterest);
+      _repo.Update(cityId, pointOfInterest);
 
       return NoContent();
     }
@@ -155,6 +164,8 @@ namespace CityInfo.API.Controllers
       pointOfInterest.Name = pointOfInterestModel.Name;
       pointOfInterest.Description = pointOfInterestModel.Description;
 
+      _repo.Update(cityId, pointOfInterest);
+
       return NoContent();
     }
 
@@ -173,7 +184,7 @@ namespace CityInfo.API.Controllers
       if (pointOfInterest == null)
         return NotFound("No Point of Interest was found for the passed id");
 
-      city.PointsOfInterest.Remove(pointOfInterest);
+      _repo.Delete(cityId, pointOfInterest);
 
       return NoContent();
     }

@@ -2,12 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CityInfo.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Serialization;
+using NLog.Extensions.Logging;
 
 namespace CityInfo.API
 {
@@ -23,6 +26,7 @@ namespace CityInfo.API
           options.OutputFormatters.Add(new XmlDataContractSerializerOutputFormatter());
         });
 
+      services.AddSingleton<ICitiesDataStore, CitiesDataStore>();
 
       /* Make it so that the names of the fields don't change when the models are serialized */
       //services.AddMvc()
@@ -36,8 +40,18 @@ namespace CityInfo.API
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-    public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+    public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
     {
+      loggerFactory.AddConsole();
+      loggerFactory.AddDebug(); // Displays loggind in the output window
+
+      /* 3º party logging nugget "NLog"
+       *
+       * Adds new methods to the already implemented "ILogger" interface
+       * 
+       */
+      loggerFactory.AddNLog(); 
+
       if (env.IsDevelopment())
         app.UseDeveloperExceptionPage();
       else
