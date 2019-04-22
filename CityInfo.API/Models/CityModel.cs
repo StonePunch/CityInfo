@@ -10,7 +10,7 @@ namespace CityInfo.API.Models
     public string Name { get; set; }
     public string Description { get; set; }
     public int NumberOfPointsOfInterest { get; set; }
-    public IEnumerable<PointOfInterestModel> PointsOfInterest { get; set; } = 
+    public ICollection<PointOfInterestModel> PointsOfInterest { get; set; } = 
       new List<PointOfInterestModel>();
   }
 }

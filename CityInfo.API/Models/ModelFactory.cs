@@ -19,8 +19,8 @@ namespace CityInfo.API.Models
 
     public CityModel Create(City city)
     {
-      IEnumerable<PointOfInterestModel> pointsOfInterest = city.PointsOfInterest
-        .Select(pointOfInterest => Create(pointOfInterest));
+      ICollection<PointOfInterestModel> pointsOfInterest = city.PointsOfInterest
+        .Select(pointOfInterest => Create(pointOfInterest)).ToList();
 
       return new CityModel()
       {

@@ -1,5 +1,6 @@
 ﻿using CityInfo.API.Models;
 using CityInfo.Data.Entities;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -52,6 +53,12 @@ namespace CityInfo.API.Controllers
       if (pointOfInterestModel == null)
         return BadRequest("The passed body could not be parsed into the appropriate object");
 
+      if (pointOfInterestModel.Name == pointOfInterestModel.Description)
+        ModelState.AddModelError("Description", "The provided description should be different from the name");
+
+      if (!ModelState.IsValid)
+        return BadRequest(ModelState);
+
       City city = _repo.GetCity(cityId);
 
       if (city == null)
@@ -74,6 +81,101 @@ namespace CityInfo.API.Controllers
         cityId = city.Id,
         id = pointOfInterest.Id,
       }, pointOfInterest);
+    }
+
+    [HttpPut("{id}")]
+    public IActionResult UpdatePointOfInterest(int cityId, int id, [FromBody]PointOfInterestModel pointOfInterestModel)
+    {
+      if (pointOfInterestModel == null)
+        return BadRequest("The passed body could not be parsed into the appropriate object");
+
+      if (pointOfInterestModel.Name == pointOfInterestModel.Description)
+        ModelState.AddModelError("Description", "The provided description should be different from the name");
+
+      if (!ModelState.IsValid)
+        return BadRequest(ModelState);
+
+      City city = _repo.GetCity(cityId);
+
+      if (city == null)
+        return NotFound("No City was found for the passed id");
+
+      PointOfInterest pointOfInterest = city.PointsOfInterest
+        .Where(p => p.Id == id)
+        .FirstOrDefault();
+
+      if (pointOfInterest == null)
+        return NotFound("No Point of Interest was found for the passed id");
+
+      pointOfInterest.Name = pointOfInterestModel.Name;
+      pointOfInterest.Description = pointOfInterestModel.Description;
+
+      //_repo.Insert(cityId, pointOfInterest);
+
+      return NoContent();
+    }
+
+    [HttpPatch("{id}")]
+    public IActionResult PartialUpdatePointOfInterest(int cityId, int id, [FromBody]JsonPatchDocument<PointOfInterestModel> patchDocument)
+    {
+      if (patchDocument == null)
+        return BadRequest("The passed body could not be parsed into the appropriate object");
+
+      City city = _repo.GetCity(cityId);
+
+      if (city == null)
+        return NotFound("No City was found for the passed id");
+
+      PointOfInterest pointOfInterest = city.PointsOfInterest
+        .Where(p => p.Id == id)
+        .FirstOrDefault();
+
+      if (pointOfInterest == null)
+        return NotFound("No Point of Interest was found for the passed id");
+
+      PointOfInterestModel pointOfInterestModel = new PointOfInterestModel()
+      {
+        Name = pointOfInterest.Name,
+        Description = pointOfInterest.Description,
+      };
+
+      patchDocument.ApplyTo(pointOfInterestModel, ModelState);
+
+      if (!ModelState.IsValid)
+        return BadRequest(ModelState);
+
+      if (pointOfInterestModel.Name == pointOfInterestModel.Description)
+        ModelState.AddModelError("Description", "The provided description should be different from the name");
+
+      TryValidateModel(pointOfInterestModel);
+
+      if (!ModelState.IsValid)
+        return BadRequest(ModelState);
+
+      pointOfInterest.Name = pointOfInterestModel.Name;
+      pointOfInterest.Description = pointOfInterestModel.Description;
+
+      return NoContent();
+    }
+
+    [HttpDelete("{id}")]
+    public IActionResult DeletePointOfInterest(int cityId, int id)
+    {
+      City city = _repo.GetCity(cityId);
+
+      if (city == null)
+        return NotFound("No City was found for the passed id");
+
+      PointOfInterest pointOfInterest = city.PointsOfInterest
+        .Where(p => p.Id == id)
+        .FirstOrDefault();
+
+      if (pointOfInterest == null)
+        return NotFound("No Point of Interest was found for the passed id");
+
+      city.PointsOfInterest.Remove(pointOfInterest);
+
+      return NoContent();
     }
   }
 }

@@ -88,16 +88,25 @@ namespace CityInfo.Data
       return Cities;
     }
 
-    public City GetCity(int id)
+    public City GetCity(int cityId)
     {
       return Cities
-        .Where(city => city.Id == id)
+        .Where(city => city.Id == cityId)
         .FirstOrDefault();
     }
 
-    //public bool Insert(int cityId, PointOfInterest pointOfInterest)
-    //{
+    public PointOfInterest Insert(int cityId, PointOfInterest pointOfInterest)
+    {
+      int maxId = GetAllCities()
+        .SelectMany(c => c.PointsOfInterest)
+        .Max(p => p.Id);
 
-    //}
+      pointOfInterest.Id = ++maxId;
+
+      City city = GetCity(cityId);
+      city.PointsOfInterest.Add(pointOfInterest);
+
+      return pointOfInterest;
+    }
   }
 }

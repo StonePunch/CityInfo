@@ -11,7 +11,7 @@ namespace CityInfo.Data.Entities
     public string Name { get; set; }
     public string Description { get; set; }
     public int NumberOfPointsOfInterest { get; set; }
-    public IEnumerable<PointOfInterest> PointsOfInterest { get; set; } = 
+    public ICollection<PointOfInterest> PointsOfInterest { get; set; } = 
       new List<PointOfInterest>();
   }
 }
