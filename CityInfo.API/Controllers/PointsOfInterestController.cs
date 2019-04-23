@@ -1,4 +1,6 @@
 ﻿using CityInfo.API.Models;
+using CityInfo.API.Properties;
+using CityInfo.API.Services;
 using CityInfo.Data;
 using CityInfo.Data.Entities;
 using Microsoft.AspNetCore.JsonPatch;
@@ -14,6 +16,13 @@ namespace CityInfo.API.Controllers
   [Route("api/cities/{cityId:int}/pointsofinterest")]
   public class PointsOfInterestController : BaseController<PointsOfInterestController>
   {
+    private readonly IMailService _mailService;
+
+    public PointsOfInterestController(IMailService mailService)
+    {
+      _mailService = mailService;
+    }
+
     [HttpGet("")]
     public IActionResult GetPointsOfInterest(int cityId)
     {
@@ -36,7 +45,7 @@ namespace CityInfo.API.Controllers
       catch (Exception exception)
       {
         _logger.LogCritical($"Exception while getting points of interest for city with id {cityId}", exception);
-        return StatusCode(500, "A problem happened while handling your request");
+        return StatusCode(500, Resources.Http500Generic);
       }
     }
 
@@ -171,21 +180,32 @@ namespace CityInfo.API.Controllers
     [HttpDelete("{id}")]
     public IActionResult DeletePointOfInterest(int cityId, int id)
     {
-      City city = _repo.GetCity(cityId);
+      try
+      {
+        City city = _repo.GetCity(cityId);
 
-      if (city == null)
-        return NotFound("No City was found for the passed id");
+        if (city == null)
+          return NotFound("No City was found for the passed id");
 
-      PointOfInterest pointOfInterest = city.PointsOfInterest
-        .Where(p => p.Id == id)
-        .FirstOrDefault();
+        PointOfInterest pointOfInterest = city.PointsOfInterest
+          .Where(p => p.Id == id)
+          .FirstOrDefault();
 
-      if (pointOfInterest == null)
-        return NotFound("No Point of Interest was found for the passed id");
+        if (pointOfInterest == null)
+          return NotFound("No Point of Interest was found for the passed id");
 
-      _repo.Delete(cityId, pointOfInterest);
+        _repo.Delete(cityId, pointOfInterest);
 
-      return NoContent();
+        _mailService.Send("Point of interest deleted",
+          $"Point of interest {pointOfInterest.Name} with id {pointOfInterest.Id} was deleted");
+
+        return NoContent();
+      }
+      catch (Exception exception)
+      {
+        _logger.LogCritical($"Exception while deleting point of interest for city with id {cityId}", exception);
+        return StatusCode(500, Resources.Http500Generic);
+      }
     }
   }
 }

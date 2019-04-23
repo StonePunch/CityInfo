@@ -14,9 +14,9 @@ namespace CityInfo.API.Controllers
   {
     private ICitiesDataStore repo;
 
-    protected ModelFactory _modelFactory { get; }
-
     private ILogger<T> logger;
+
+    protected ModelFactory _modelFactory { get; }
 
     // TODO: Ask how this is working
     protected ICitiesDataStore _repo => repo ?? (repo = HttpContext?.RequestServices.GetService<ICitiesDataStore>());
