@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -24,10 +25,12 @@ namespace CityInfo.API
 
     public Startup(IHostingEnvironment env)
     {
+      // The last element added overwrites all previous ones
       IConfigurationBuilder configBuilder = new ConfigurationBuilder()
         .SetBasePath(env.ContentRootPath)
         .AddJsonFile("appSettings.json", optional: false, reloadOnChange: true)
-        .AddJsonFile($"appSettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: true);
+        .AddJsonFile($"appSettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: true)
+        .AddEnvironmentVariables();
 
       Configuration = configBuilder.Build();
     }
@@ -45,13 +48,16 @@ namespace CityInfo.API
           options.OutputFormatters.Add(new XmlDataContractSerializerOutputFormatter());
         });
 
-      services.AddSingleton<ICitiesDataStore, CitiesDataStore>();
-
 #if DEBUG
       services.AddTransient<IMailService, LocalMailService>();
 #else
       services.AddTransient<IMailService, CloudMailService>();
 #endif
+
+      string connectionString = Configuration["connectionStrings:cityInfoDbConnectionString"];
+      services.AddDbContext<CityInfoContext>(o => o.UseSqlServer(connectionString));
+
+      services.AddSingleton<ICitiesDataStore, InMemoryCitiesDataStore>();
 
       /* Make it so that the names of the fields don't change when the models are serialized */
       //services.AddMvc()

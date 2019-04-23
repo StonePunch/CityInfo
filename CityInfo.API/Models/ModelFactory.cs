@@ -26,7 +26,7 @@ namespace CityInfo.API.Models
       {
         Name = city.Name,
         Description = city.Description,
-        NumberOfPointsOfInterest = city.NumberOfPointsOfInterest,
+        //NumberOfPointsOfInterest = city.NumberOfPointsOfInterest,
         PointsOfInterest = pointsOfInterest,
       };
     }

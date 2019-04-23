@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace CityInfo.Data
 {
-  public class CitiesDataStore : ICitiesDataStore
+  public class InMemoryCitiesDataStore : ICitiesDataStore
   {
     private readonly List<City> Cities;
 
-    public CitiesDataStore()
+    public InMemoryCitiesDataStore()
     {
       Cities = new List<City>()
       {
@@ -19,7 +19,7 @@ namespace CityInfo.Data
           Id = 1,
           Name = "New York City",
           Description = "Big Apple",
-          NumberOfPointsOfInterest = 10,
+          //NumberOfPointsOfInterest = 10,
           PointsOfInterest = new List<PointOfInterest>()
           {
             new PointOfInterest()
@@ -47,7 +47,7 @@ namespace CityInfo.Data
           Id = 2,
           Name = "Antwerp",
           Description = "Has a cathedral that was never finished",
-          NumberOfPointsOfInterest = 3,
+          //NumberOfPointsOfInterest = 3,
           PointsOfInterest = new List<PointOfInterest>()
           {
             new PointOfInterest()
@@ -63,7 +63,7 @@ namespace CityInfo.Data
           Id = 3,
           Name = "Paris",
           Description = "Avecs",
-          NumberOfPointsOfInterest = 13,
+          //NumberOfPointsOfInterest = 13,
           PointsOfInterest = new List<PointOfInterest>()
           {
             new PointOfInterest()
