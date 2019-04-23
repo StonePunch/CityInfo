@@ -19,7 +19,6 @@ namespace CityInfo.API.Controllers
     {
       try
       {
-        throw new Exception("hi");
         City city = _repo.GetCity(cityId);
 
         if (city == null)
