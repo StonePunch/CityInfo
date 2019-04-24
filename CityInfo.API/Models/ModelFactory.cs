@@ -8,7 +8,7 @@ namespace CityInfo.API.Models
 {
   public class ModelFactory
   {
-    public PointOfInterestModel Create(PointOfInterest pointOfInterest)
+    public PointOfInterestModel CreatePointOfInterestModel(PointOfInterest pointOfInterest)
     {
       return new PointOfInterestModel()
       {
@@ -17,17 +17,27 @@ namespace CityInfo.API.Models
       };
     }
 
-    public CityModel Create(City city)
+    public CityModel CreateCityModel(City city)
     {
-      ICollection<PointOfInterestModel> pointsOfInterest = city.PointsOfInterest
-        .Select(pointOfInterest => Create(pointOfInterest)).ToList();
-
+      IEnumerable<PointOfInterestModel> pointsOfInterest = city.PointsOfInterest
+        .Select(pointOfInterest => CreatePointOfInterestModel(pointOfInterest));
+      
       return new CityModel()
       {
         Name = city.Name,
         Description = city.Description,
-        //NumberOfPointsOfInterest = city.NumberOfPointsOfInterest,
+        NumberOfPointsOfInterest = city.PointsOfInterest.Count,
         PointsOfInterest = pointsOfInterest,
+      };
+    }
+
+    public CityWithoutPointsOfInterestModel CreateCityWithoutPointsOfInterestModel(City city)
+    {
+      return new CityWithoutPointsOfInterestModel()
+      {
+        Name = city.Name,
+        Description = city.Description,
+        NumberOfPointsOfInterest = city.PointsOfInterest.Count,
       };
     }
   }

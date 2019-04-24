@@ -28,23 +28,24 @@ namespace CityInfo.API.Controllers
     {
       try
       {
-        City city = _repo.GetCity(cityId);
+        if (!_repo.CityExists(cityId))
+          return NotFound();
 
-        if (city == null)
-        {
-          _logger.LogInformation($"City with id {cityId} wasn't found when accessing points of interest.");
-          return NotFound("No City was found for the passed id");
-        }
+        IEnumerable<PointOfInterest> pointsOfInterest = _repo.GetPointsOfInterestForCity(cityId);
 
-        CityModel cityModel = _modelFactory.Create(city);
+        if (pointsOfInterest.Count() == 0)
+          return NotFound();
 
-        IEnumerable<PointOfInterestModel> pointsOfInterest = cityModel.PointsOfInterest;
+        IEnumerable<PointOfInterestModel> pointsOfInterestModel = pointsOfInterest
+          .Select(pointOfInterest => _modelFactory
+          .CreatePointOfInterestModel(pointOfInterest));
 
-        return Ok(pointsOfInterest);
+        return Ok(pointsOfInterestModel);
       }
       catch (Exception exception)
       {
-        _logger.LogCritical($"Exception while getting points of interest for city with id {cityId}", exception);
+        _logger.LogCritical($"Exception while getting points of interest " +
+          $"for city with the id:{cityId}", exception);
         return StatusCode(500, Resources.Http500Generic);
       }
     }
@@ -52,129 +53,174 @@ namespace CityInfo.API.Controllers
     [HttpGet("{id}", Name = "GetPointOfInterest")]
     public IActionResult GetPointOfInterest(int cityId, int id)
     {
-      City city = _repo.GetCity(cityId);
+      try
+      {
+        if (!_repo.CityExists(cityId))
+          return NotFound();
 
-      if (city == null)
-        return NotFound("No City was found for the passed id");
+        PointOfInterest pointOfInterest = _repo.GetPointOfInterestForCity(cityId, id);
 
-      PointOfInterest pointOfInterest = city.PointsOfInterest
-        .Where(p => p.Id == id)
-        .FirstOrDefault();
+        if (pointOfInterest == null)
+          return NotFound();
 
-      PointOfInterestModel pointOfInterestModel = _modelFactory.Create(pointOfInterest);
+        PointOfInterestModel pointOfInterestModel = _modelFactory
+          .CreatePointOfInterestModel(pointOfInterest);
 
-      if (pointOfInterestModel == null)
-        return NotFound("No Point of Interest was found for the passed id");
-
-      return Ok(pointOfInterestModel);
+        return Ok(pointOfInterestModel);
+      }
+      catch (Exception exception)
+      {
+        _logger.LogCritical($"Exception while getting the point of interest " +
+          $"with the id:{id} for city with the id:{cityId}", exception);
+        return StatusCode(500, Resources.Http500Generic);
+      }
     }
 
     [HttpPost("")]
     public IActionResult CreatePointOfInterest(int cityId, [FromBody]PointOfInterestModel pointOfInterestModel)
     {
-      if (pointOfInterestModel == null)
-        return BadRequest("The passed body could not be parsed into the appropriate object");
-
-      if (pointOfInterestModel.Name == pointOfInterestModel.Description)
-        ModelState.AddModelError("Description", "The provided description should be different from the name");
-
-      if (!ModelState.IsValid)
-        return BadRequest(ModelState);
-
-      City city = _repo.GetCity(cityId);
-
-      if (city == null)
-        return NotFound("No City was found for the passed id");
-
-      PointOfInterest pointOfInterest = new PointOfInterest()
+      try
       {
-        Name = pointOfInterestModel.Name,
-        Description = pointOfInterestModel.Description,
-      };
+        if (pointOfInterestModel == null)
+          return BadRequest("The passed body could not be parsed into the appropriate object");
 
-      _repo.Insert(cityId, pointOfInterest);
+        if (pointOfInterestModel.Name == pointOfInterestModel.Description)
+          ModelState.AddModelError("Description", "The provided description should be different from the name");
 
-      return CreatedAtRoute("GetPointOfInterest", new {
-        cityId = city.Id,
-        id = pointOfInterest.Id,
-      }, pointOfInterest);
+        if (!ModelState.IsValid)
+          return BadRequest(ModelState);
+
+        City city = _repo.GetCity(cityId, false);
+
+        if (city == null)
+          return NotFound();
+
+        PointOfInterest pointOfInterest = new PointOfInterest()
+        {
+          Name = pointOfInterestModel.Name,
+          Description = pointOfInterestModel.Description,
+        };
+
+        _repo.AddPointOfInterestToCity(cityId, pointOfInterest);
+
+        if (!_repo.SaveChanges())
+        {
+          _logger.LogInformation($"Failed to save a new point of interest in the city with the id:{cityId}");
+          return StatusCode(500, "A problem happened while saving the new entity");
+        }
+
+        return CreatedAtRoute("GetPointOfInterest", new
+        {
+          cityId = city.Id,
+          id = pointOfInterest.Id,
+        }, _modelFactory.CreatePointOfInterestModel(pointOfInterest));
+      }
+      catch (Exception exception)
+      {
+        _logger.LogCritical($"Exception while adding a point of interest " +
+          $"to the city with the id:{cityId}", exception);
+        return StatusCode(500, Resources.Http500Generic);
+      }
     }
 
     [HttpPut("{id}")]
     public IActionResult UpdatePointOfInterest(int cityId, int id, [FromBody]PointOfInterestModel pointOfInterestModel)
     {
-      if (pointOfInterestModel == null)
-        return BadRequest("The passed body could not be parsed into the appropriate object");
+      try
+      {
+        if (pointOfInterestModel == null)
+          return BadRequest("The passed body could not be parsed into the appropriate object");
 
-      if (pointOfInterestModel.Name == pointOfInterestModel.Description)
-        ModelState.AddModelError("Description", "The provided description should be different from the name");
+        if (pointOfInterestModel.Name == pointOfInterestModel.Description)
+          ModelState.AddModelError("Description", "The provided description should be different from the name");
 
-      if (!ModelState.IsValid)
-        return BadRequest(ModelState);
+        if (!ModelState.IsValid)
+          return BadRequest(ModelState);
 
-      City city = _repo.GetCity(cityId);
+        if (!_repo.CityExists(cityId))
+          return NotFound();
 
-      if (city == null)
-        return NotFound("No City was found for the passed id");
+        PointOfInterest pointOfInterest = _repo.GetPointOfInterestForCity(cityId, id);
 
-      PointOfInterest pointOfInterest = city.PointsOfInterest
-        .Where(p => p.Id == id)
-        .FirstOrDefault();
+        if (pointOfInterest == null)
+          return NotFound();
 
-      if (pointOfInterest == null)
-        return NotFound("No Point of Interest was found for the passed id");
+        pointOfInterest.Name = pointOfInterestModel.Name;
+        pointOfInterest.Description = pointOfInterestModel.Description;
 
-      pointOfInterest.Name = pointOfInterestModel.Name;
-      pointOfInterest.Description = pointOfInterestModel.Description;
+        _repo.UpdatePointOfInterest(pointOfInterest);
 
-      _repo.Update(cityId, pointOfInterest);
+        if (!_repo.SaveChanges())
+        {
+          _logger.LogInformation($"Failed to update a point of interest with " +
+            $"the id:{pointOfInterest.Id} for the city with the id:{cityId}");
+          return StatusCode(500, "A problem happened while updating the entity");
+        }
 
-      return NoContent();
+        return NoContent();
+      }
+      catch (Exception exception)
+      {
+        _logger.LogCritical($"Exception while updating the point of interest " +
+          $"for the city with the id:{cityId}", exception);
+        return StatusCode(500, Resources.Http500Generic);
+      }
+      
     }
 
     [HttpPatch("{id}")]
     public IActionResult PartialUpdatePointOfInterest(int cityId, int id, [FromBody]JsonPatchDocument<PointOfInterestModel> patchDocument)
     {
-      if (patchDocument == null)
-        return BadRequest("The passed body could not be parsed into the appropriate object");
-
-      City city = _repo.GetCity(cityId);
-
-      if (city == null)
-        return NotFound("No City was found for the passed id");
-
-      PointOfInterest pointOfInterest = city.PointsOfInterest
-        .Where(p => p.Id == id)
-        .FirstOrDefault();
-
-      if (pointOfInterest == null)
-        return NotFound("No Point of Interest was found for the passed id");
-
-      PointOfInterestModel pointOfInterestModel = new PointOfInterestModel()
+      try
       {
-        Name = pointOfInterest.Name,
-        Description = pointOfInterest.Description,
-      };
+        if (patchDocument == null)
+          return BadRequest("The passed body could not be parsed into the appropriate object");
 
-      patchDocument.ApplyTo(pointOfInterestModel, ModelState);
+        if (!_repo.CityExists(cityId))
+          return NotFound();
 
-      if (!ModelState.IsValid)
-        return BadRequest(ModelState);
+        PointOfInterest pointOfInterest = _repo.GetPointOfInterestForCity(cityId, id);
 
-      if (pointOfInterestModel.Name == pointOfInterestModel.Description)
-        ModelState.AddModelError("Description", "The provided description should be different from the name");
+        if (pointOfInterest == null)
+          return NotFound();
 
-      TryValidateModel(pointOfInterestModel);
+        PointOfInterestModel pointOfInterestModel = _modelFactory
+          .CreatePointOfInterestModel(pointOfInterest);
 
-      if (!ModelState.IsValid)
-        return BadRequest(ModelState);
+        patchDocument.ApplyTo(pointOfInterestModel, ModelState);
 
-      pointOfInterest.Name = pointOfInterestModel.Name;
-      pointOfInterest.Description = pointOfInterestModel.Description;
+        if (!ModelState.IsValid)
+          return BadRequest(ModelState);
 
-      _repo.Update(cityId, pointOfInterest);
+        if (pointOfInterestModel.Name == pointOfInterestModel.Description)
+          ModelState.AddModelError("Description", "The provided description " +
+            "should be different from the name");
 
-      return NoContent();
+        TryValidateModel(pointOfInterestModel);
+
+        if (!ModelState.IsValid)
+          return BadRequest(ModelState);
+
+        pointOfInterest.Name = pointOfInterestModel.Name;
+        pointOfInterest.Description = pointOfInterestModel.Description;
+
+        _repo.UpdatePointOfInterest(pointOfInterest);
+
+        if (!_repo.SaveChanges())
+        {
+          _logger.LogInformation($"Failed to update a point of interest with " +
+            $"the id:{pointOfInterest.Id} in the city with the id:{cityId}");
+          return StatusCode(500, "A problem happened while updating the entity");
+        }
+
+        return NoContent();
+      }
+      catch (Exception exception)
+      {
+        _logger.LogCritical($"Exception while updating the point of interest " +
+          $"for the city with the id:{cityId}", exception);
+        return StatusCode(500, Resources.Http500Generic);
+      }
     }
 
     [HttpDelete("{id}")]
@@ -182,20 +228,24 @@ namespace CityInfo.API.Controllers
     {
       try
       {
-        City city = _repo.GetCity(cityId);
+        if (!_repo.CityExists(cityId))
+          return NotFound();
 
-        if (city == null)
-          return NotFound("No City was found for the passed id");
-
-        PointOfInterest pointOfInterest = city.PointsOfInterest
-          .Where(p => p.Id == id)
-          .FirstOrDefault();
+        PointOfInterest pointOfInterest = _repo.GetPointOfInterestForCity(cityId, id);
 
         if (pointOfInterest == null)
-          return NotFound("No Point of Interest was found for the passed id");
+          return NotFound();
 
-        _repo.Delete(cityId, pointOfInterest);
+        _repo.DeletePointOfInterest(id);
 
+        if (!_repo.SaveChanges())
+        {
+          _logger.LogInformation($"Failed to delete the point of interest with " +
+            $"the id:{pointOfInterest.Id} for the city with the id:{cityId}");
+          return StatusCode(500, "A problem happened while deleting the entity");
+        }
+
+        // Send mail when a point of interest is deleted
         _mailService.Send("Point of interest deleted",
           $"Point of interest {pointOfInterest.Name} with id {pointOfInterest.Id} was deleted");
 
@@ -203,7 +253,7 @@ namespace CityInfo.API.Controllers
       }
       catch (Exception exception)
       {
-        _logger.LogCritical($"Exception while deleting point of interest for city with id {cityId}", exception);
+        _logger.LogCritical($"Exception while deleting a point of interest for city with the id:{cityId}", exception);
         return StatusCode(500, Resources.Http500Generic);
       }
     }

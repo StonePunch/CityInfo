@@ -12,14 +12,14 @@ namespace CityInfo.API.Controllers
 {
   public abstract class BaseController<T> : Controller where T : BaseController<T>
   {
-    private ICitiesDataStore repo;
+    private ICityInfoRepository repo;
 
     private ILogger<T> logger;
 
     protected ModelFactory _modelFactory { get; }
 
     // TODO: Ask how this is working
-    protected ICitiesDataStore _repo => repo ?? (repo = HttpContext?.RequestServices.GetService<ICitiesDataStore>());
+    protected ICityInfoRepository _repo => repo ?? (repo = HttpContext?.RequestServices.GetService<ICityInfoRepository>());
     protected ILogger<T> _logger => logger ?? (logger = HttpContext?.RequestServices.GetService<ILogger<T>>());
 
     //public BaseController(ICitiesDataStore repo, ILogger<T> logger)

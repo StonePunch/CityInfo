@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace CityInfo.Data
 {
-  public class InMemoryCitiesDataStore : ICitiesDataStore
+  public class InMemoryCityRepository : ICityInfoRepository
   {
     private readonly List<City> Cities;
 
-    public InMemoryCitiesDataStore()
+    public InMemoryCityRepository()
     {
       Cities = new List<City>()
       {
@@ -83,53 +83,51 @@ namespace CityInfo.Data
       };
     }
 
-    public ICollection<City> GetAllCities()
+    // TODO: Implement this, will be usefull in the future
+
+    public bool AddPointOfInterestToCity(int cityId, PointOfInterest pointOfInterest)
     {
-      return Cities;
+      throw new NotImplementedException();
     }
 
-    public City GetCity(int cityId)
+    public bool CityExists(int cityId)
     {
-      return Cities
-        .Where(city => city.Id == cityId)
-        .FirstOrDefault();
+      throw new NotImplementedException();
     }
 
-    public PointOfInterest Insert(int cityId, PointOfInterest pointOfInterest)
+    public bool DeletePointOfInterest(int pointOfInterestId)
     {
-      int maxId = GetAllCities()
-        .SelectMany(c => c.PointsOfInterest)
-        .Max(p => p.Id);
-
-      pointOfInterest.Id = ++maxId;
-
-      City city = GetCity(cityId);
-      city.PointsOfInterest.Add(pointOfInterest);
-
-      return pointOfInterest;
+      throw new NotImplementedException();
     }
 
-    public bool Update(int cityId, PointOfInterest pointOfInterest)
+    public IEnumerable<City> GetCities()
     {
-      City city = GetCity(cityId);
-
-      PointOfInterest updatedPointOfInterest = city.PointsOfInterest
-        .Where(p => p.Id == pointOfInterest.Id)
-        .FirstOrDefault();
-
-      updatedPointOfInterest.Name = pointOfInterest.Name;
-      updatedPointOfInterest.Description = pointOfInterest.Description;
-
-      return true;
+      throw new NotImplementedException();
     }
 
-    public bool Delete(int cityId, PointOfInterest pointOfInterest)
+    public City GetCity(int cityId, bool includePointsOfInterest)
     {
-      City city = GetCity(cityId);
+      throw new NotImplementedException();
+    }
 
-      city.PointsOfInterest.Remove(pointOfInterest);
+    public PointOfInterest GetPointOfInterestForCity(int cityId, int pointOfInterestId)
+    {
+      throw new NotImplementedException();
+    }
 
-      return true;
+    public IEnumerable<PointOfInterest> GetPointsOfInterestForCity(int cityId)
+    {
+      throw new NotImplementedException();
+    }
+
+    public bool SaveChanges()
+    {
+      throw new NotImplementedException();
+    }
+
+    public bool UpdatePointOfInterest(PointOfInterest pointOfInterest)
+    {
+      throw new NotImplementedException();
     }
   }
 }

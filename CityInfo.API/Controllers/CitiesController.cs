@@ -1,4 +1,5 @@
 ﻿using CityInfo.API.Models;
+using CityInfo.API.Properties;
 using CityInfo.Data;
 using CityInfo.Data.Entities;
 using Microsoft.AspNetCore.Mvc;
@@ -16,25 +17,47 @@ namespace CityInfo.API.Controllers
     [HttpGet, Route("")]
     public IActionResult GetCities()
     {
-      IEnumerable<CityModel> cities = _repo.GetAllCities()
-        .Select(city => _modelFactory.Create(city));
+      try
+      {
+        IEnumerable<City> cities = _repo.GetCities();
 
-      return Ok(cities);
+        if (cities.Count() == 0)
+          return NotFound();
+
+        IEnumerable<CityModel> citiesModel = cities
+          .Select(city => _modelFactory.CreateCityModel(city));
+
+        return Ok(citiesModel);
+      }
+      catch (Exception exception)
+      {
+        _logger.LogCritical("Exception while getting cities", exception);
+        return StatusCode(500, Resources.Http500Generic);
+      }
+      
     }
 
     [HttpGet, Route("{id:int}")]
-    public IActionResult GetCity(int id)
+    public IActionResult GetCity(int id, bool includePointsOfInterest = false)
     {
-      City city = _repo.GetAllCities()
-        .Where(c => c.Id == id)
-        .FirstOrDefault();
+      try
+      {
+        City city = _repo.GetCity(id, includePointsOfInterest);
 
-      if (city == null)
-        return NotFound("No City was found for the passed id");
+        if (city == null)
+          return NotFound();
 
-      CityModel cityModel = _modelFactory.Create(city);
+        if (includePointsOfInterest)
+          return Ok(_modelFactory.CreateCityModel(city));
 
-      return Ok(cityModel);
+        return Ok(_modelFactory.CreateCityWithoutPointsOfInterestModel(city));
+      }
+      catch (Exception exception)
+      {
+        _logger.LogCritical($"Exception while getting city with id:{id}", exception);
+        return StatusCode(500, Resources.Http500Generic);
+      }
+      
     }
   }
 }

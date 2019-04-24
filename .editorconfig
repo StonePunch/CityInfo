@@ -1,0 +1,11 @@
+# All Files
+[*]
+end_of_line = crlf
+
+# C# or VB files
+[*.{cs,vb}]
+guidelines = 80, 100
+guidelines_style = 2px dotted cfcfcf
+
+[*.xml]
+indent_style = space
