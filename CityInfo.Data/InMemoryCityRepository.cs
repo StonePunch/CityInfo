@@ -8,8 +8,8 @@ namespace CityInfo.Data
 {
   public class InMemoryCityRepository : ICityInfoRepository
   {
-    private readonly List<City> Cities;
-
+    private readonly IEnumerable<City> Cities;
+    
     public InMemoryCityRepository()
     {
       Cities = new List<City>()
@@ -19,24 +19,26 @@ namespace CityInfo.Data
           Id = 1,
           Name = "New York City",
           Description = "Big Apple",
-          //NumberOfPointsOfInterest = 10,
           PointsOfInterest = new List<PointOfInterest>()
           {
             new PointOfInterest()
             {
               Id = 1,
+              CityId = 1,
               Name = "Broadway",
               Description = "Phantom of the Opera is recommended",
             },
             new PointOfInterest()
             {
               Id = 2,
+              CityId = 1,
               Name = "Times Square",
               Description = "Crossroads of the City",
             },
             new PointOfInterest()
             {
               Id = 3,
+              CityId = 1,
               Name = "Central Park",
               Description = "Some greenery in the contrete jungle",
             },
@@ -47,12 +49,12 @@ namespace CityInfo.Data
           Id = 2,
           Name = "Antwerp",
           Description = "Has a cathedral that was never finished",
-          //NumberOfPointsOfInterest = 3,
           PointsOfInterest = new List<PointOfInterest>()
           {
             new PointOfInterest()
             {
               Id = 4,
+              CityId = 2,
               Name = "Cathedral of Our Lady",
               Description = "Was supposed to have two towers, not just one",
             },
@@ -63,18 +65,19 @@ namespace CityInfo.Data
           Id = 3,
           Name = "Paris",
           Description = "Avecs",
-          //NumberOfPointsOfInterest = 13,
           PointsOfInterest = new List<PointOfInterest>()
           {
             new PointOfInterest()
             {
               Id = 5,
+              CityId = 3,
               Name = "Eiffel Tower",
               Description = "Was originaly only supposed to be a temporary building",
             },
             new PointOfInterest()
             {
               Id = 6,
+              CityId = 3,
               Name = "Notre Dame",
               Description = "How is God going to protect you, if he can't even protect his own house",
             },
@@ -83,51 +86,124 @@ namespace CityInfo.Data
       };
     }
 
-    // TODO: Implement this, will be usefull in the future
-
     public bool AddPointOfInterestToCity(int cityId, PointOfInterest pointOfInterest)
     {
-      throw new NotImplementedException();
+      try
+      {
+        City city = Cities
+          .Where(c => c.Id == cityId)
+          .FirstOrDefault();
+
+        city.PointsOfInterest.Add(pointOfInterest);
+
+        return true;
+      }
+      catch (Exception)
+      {
+        return false;
+      }
     }
 
     public bool CityExists(int cityId)
     {
-      throw new NotImplementedException();
+      return Cities.Any(city => city.Id == cityId);
     }
 
     public bool DeletePointOfInterest(int pointOfInterestId)
     {
-      throw new NotImplementedException();
+      try
+      {
+        PointOfInterest pointOfInterest = Cities
+          .SelectMany(c => c.PointsOfInterest)
+          .Where(p => p.Id == pointOfInterestId)
+          .FirstOrDefault();
+
+        if (pointOfInterest == null)
+          return false;
+
+        Cities
+          .Where(c => c.Id == pointOfInterest.CityId)
+          .FirstOrDefault()
+          .PointsOfInterest
+          .Remove(pointOfInterest);
+
+        return true;
+      }
+      catch (Exception)
+      {
+        return false;
+      }
     }
 
     public IEnumerable<City> GetCities()
     {
-      throw new NotImplementedException();
+      return Cities
+        .Select(city => city) // Make it a new list and not a direct reference to the inMemory list
+        .OrderBy(city => city.Name)
+        .ToList();
     }
 
     public City GetCity(int cityId, bool includePointsOfInterest)
     {
-      throw new NotImplementedException();
+      if (includePointsOfInterest)
+      {
+        City city = Cities
+          .Select(c => c) // Make it a new list and not a direct reference to the inMemory list
+          .Where(c => c.Id == cityId)
+          .FirstOrDefault();
+
+        city.PointsOfInterest = null;
+
+        return city;
+      }
+        
+      return Cities
+        .Select(city => city) // Make it a new list and not a direct reference to the inMemory list
+        .Where(city => city.Id == cityId)
+        .FirstOrDefault();
     }
 
     public PointOfInterest GetPointOfInterestForCity(int cityId, int pointOfInterestId)
     {
-      throw new NotImplementedException();
+      return Cities
+        .SelectMany(city => city.PointsOfInterest)
+        .Where(pointOfInterest => pointOfInterest.CityId == cityId)
+        .Where(pointOfInterest => pointOfInterest.Id == pointOfInterestId)
+        .FirstOrDefault();
     }
 
     public IEnumerable<PointOfInterest> GetPointsOfInterestForCity(int cityId)
     {
-      throw new NotImplementedException();
+      return Cities
+        .SelectMany(city => city.PointsOfInterest)
+        .Where(pointOfInterest => pointOfInterest.CityId == cityId);
     }
 
     public bool SaveChanges()
     {
-      throw new NotImplementedException();
+      return true;
     }
 
     public bool UpdatePointOfInterest(PointOfInterest pointOfInterest)
     {
-      throw new NotImplementedException();
+      try
+      {
+        PointOfInterest pointOfInterestToChange = Cities
+          .Where(city => city.Id == pointOfInterest.CityId)
+          .FirstOrDefault()
+          .PointsOfInterest
+          .Where(p => p.Id == pointOfInterest.Id)
+          .FirstOrDefault();
+
+        pointOfInterestToChange.Name = pointOfInterest.Name;
+        pointOfInterestToChange.Description = pointOfInterest.Description;
+
+        return true;
+      }
+      catch (Exception)
+      {
+        return false;
+      }
     }
   }
 }

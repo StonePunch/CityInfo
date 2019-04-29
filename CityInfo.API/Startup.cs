@@ -57,7 +57,9 @@ namespace CityInfo.API
       string connectionString = Configuration["connectionStrings:cityInfoDbConnectionString"];
       services.AddDbContext<CityInfoContext>(o => o.UseSqlServer(connectionString));
 
-      //services.AddScoped<ICityInfoRepository, InMemoryCityRepository>();
+      /* ------------ Define which data service to use ------------ */
+
+      //services.AddSingleton<ICityInfoRepository, InMemoryCityRepository>();
       services.AddScoped<ICityInfoRepository, CityInfoRepository>();
 
       /* Make it so that the names of the fields don't change when the models are serialized */
